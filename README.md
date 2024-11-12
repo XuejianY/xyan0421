@@ -1,5 +1,5 @@
 # Creative coding major project
-## Part1: Interaction Instructions
+## Part 1: Interaction Instructions
 ### Automatic Wave Animation 
 The whole canvas will auto-undulate wave-like when the page loads. Besides, it changes direction automatically from time to time. To such an effect, each dot's size has changed, which provides the image with rhythmic flow and leaves an impression of gentle, soothing motion like waves.
 ### Mouse Interaction
