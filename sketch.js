@@ -1,16 +1,18 @@
 let img;
-let numSegments = 80; // Dot density
+let numSegments = 50;
+let numSegmentsX;
+let numSegmentsY;
 let segmentSize = []; // Stores the current size of each dot
 let segmentPositions = []; // Stores the position of each dot
-let segmentSizeOriginal; // Original size of the dots, equal in width and height
-const easing = 0.1; // Easing coefficient
+let segmentSizeOriginal; // Original size of the dots
+const easing = 0.1;
 
 let ripples = []; // Stores all Ripple objects
 
 // Initial wave parameters
-let waveFrequency = 0.1; // Wave frequency
-let waveSpeed = 0.05;    // Wave speed
-let waveAmplitude;       // Wave amplitude, calculated in initializeSegments
+let waveFrequency = 0.1;
+let waveSpeed = 0.05;
+let waveAmplitude;
 
 // Define minimum and maximum sizes of the dots
 let maxSize;
@@ -24,11 +26,11 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   noStroke();
 
-  // Initialize dot sizes and positions
+  // Initialize the size and position of dots
   initializeSegments();
 
-  // Periodically change wave parameters using setInterval
-  setInterval(changeWaveParameters, 5000); // Change wave parameters every 5 seconds
+  // Change wave parameters every 5 seconds
+  setInterval(changeWaveParameters, 5000);
 }
 
 function draw() {
@@ -36,10 +38,9 @@ function draw() {
 
   let index = 0; // Used to iterate through the dot array
 
-  // Update each Ripple's radius and lifespan
+  // Update each Ripple's radius and lifespan，remove the Ripple if it has expired
   for (let i = ripples.length - 1; i >= 0; i--) {
     ripples[i].update();
-    // Remove Ripple if it has expired
     if (ripples[i].isFinished) {
       ripples.splice(i, 1);
     }
@@ -52,22 +53,11 @@ function draw() {
   let offsetX = (width - displayWidth) / 2;
   let offsetY = (height - displayHeight) / 2;
 
-  // Calculate dot width and height
-  let segmentWidth = displayWidth / numSegments;
-  let segmentHeight = displayHeight / numSegments;
+  // Use consistent spacing
+  let segmentSpacing = segmentSizeOriginal;
 
-  // Use the smaller value as the original dot size to ensure circular dots
-  segmentSizeOriginal = min(segmentWidth, segmentHeight);
-
-  // Define minimum and maximum sizes of the dots
-  maxSize = segmentSizeOriginal;
-  minSize = maxSize * 0.7;
-
-  // Calculate wave amplitude based on size
-  waveAmplitude = (maxSize - minSize) / maxSize;
-
-  for (let y = 0; y < numSegments; y++) {
-    for (let x = 0; x < numSegments; x++) {
+  for (let y = 0; y < numSegmentsY; y++) {
+    for (let x = 0; x < numSegmentsX; x++) {
       let pos = segmentPositions[index];
 
       // Get the color of each dot
@@ -77,7 +67,7 @@ function draw() {
 
       let targetSize;
 
-      // Calculate the target size with the default wave effect, ranging between minSize and maxSize
+      // Calculate the target size with the default wave effect
       let phase = (x + y) * waveFrequency + frameCount * waveSpeed;
       let sizeVariation = (sin(phase) + 1) / 2; // Maps sin(phase) to [0, 1]
       targetSize = minSize + sizeVariation * (maxSize - minSize);
@@ -87,7 +77,7 @@ function draw() {
         let d = dist(pos.x, pos.y, ripple.x, ripple.y);
         // If the dot is within the Ripple's range, change its target size
         if (abs(d - ripple.radius) < maxSize) {
-          targetSize = maxSize; // Set to maximum size, but not exceeding maxSize
+          targetSize = maxSize;
         }
       }
 
@@ -96,15 +86,15 @@ function draw() {
 
       // Save the current drawing state
       push();
-      // Move to the dot's position
+      // Move
       translate(pos.x, pos.y);
-      // Rotate the dot
+      // Rotate
       rotate(frameCount * 0.01 + (x + y));
-      // Scale the dot
+      // Scale
       let scaleSize = segmentSize[index] / segmentSizeOriginal;
       scale(scaleSize);
 
-      // Draw the circular dot with the same width and height
+      // Draw the circular dot
       fill(segmentColour);
       ellipseMode(CENTER);
       ellipse(0, 0, segmentSizeOriginal, segmentSizeOriginal);
@@ -126,16 +116,22 @@ function initializeSegments() {
   let displayWidth = img.width * scaleFactor;
   let displayHeight = img.height * scaleFactor;
 
-  // Calculate offset to center the image
+  //center the image
   let offsetX = (width - displayWidth) / 2;
   let offsetY = (height - displayHeight) / 2;
 
-  // Calculate dot width and height
-  let segmentWidth = displayWidth / numSegments;
-  let segmentHeight = displayHeight / numSegments;
+  // Calculate uniform spacing
+  let segmentSpacing = min(displayWidth, displayHeight) / numSegments;
 
-  // Use the smaller value as the original dot size to ensure circular dots
-  segmentSizeOriginal = min(segmentWidth, segmentHeight);
+  // Calculate the number of dots in x and y directions
+  numSegmentsX = floor(displayWidth / segmentSpacing);
+  numSegmentsY = floor(displayHeight / segmentSpacing);
+
+  // Calculate spacing to ensure consistent spacing in x and y directions
+  segmentSpacing = min(displayWidth / numSegmentsX, displayHeight / numSegmentsY);
+
+  // Update the original size of dots
+  segmentSizeOriginal = segmentSpacing;
 
   // Define minimum and maximum sizes of the dots
   maxSize = segmentSizeOriginal;
@@ -146,14 +142,14 @@ function initializeSegments() {
 
   // Initialize the size and position of each dot
   let index = 0;
-  for (let y = 0; y < numSegments; y++) {
-    for (let x = 0; x < numSegments; x++) {
+  for (let y = 0; y < numSegmentsY; y++) {
+    for (let x = 0; x < numSegmentsX; x++) {
       // Initialize size to maximum size
       segmentSize[index] = maxSize;
 
       // Calculate the position of each dot
-      let posX = offsetX + x * segmentWidth + segmentWidth / 2;
-      let posY = offsetY + y * segmentHeight + segmentHeight / 2;
+      let posX = offsetX + x * segmentSpacing + segmentSpacing / 2;
+      let posY = offsetY + y * segmentSpacing + segmentSpacing / 2;
       segmentPositions[index] = createVector(posX, posY);
 
       index++;
@@ -169,14 +165,13 @@ function mousePressed() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  initializeSegments(); // Recalculate dot positions and sizes
+  initializeSegments();
 }
 
 function changeWaveParameters() {
   // Randomly change wave frequency and speed
   waveFrequency = random(0.05, 0.15);
   waveSpeed = random(0.02, 0.08);
-  // Wave amplitude is calculated in initializeSegments, no need to change it here
 }
 
 // Ripple class to manage ripple effects
